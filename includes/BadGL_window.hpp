@@ -3,8 +3,6 @@
 
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
-#include <csignal>
-#include <exception>
 #include <stdexcept>
 
 struct ScreenDimensions
@@ -15,8 +13,8 @@ struct ScreenDimensions
 class BadWindow
 {
 private:
-    GLFWwindow * window;
-    ScreenDimensions dimensions = {};
+    GLFWwindow * Window;
+    ScreenDimensions Dimensions = {};
 public:
     BadWindow(int width, int height, const char * title,
         int monitor_num = 0, GLFWwindow * share = NULL)
@@ -27,17 +25,17 @@ public:
             return;
         }
         puts("GLFW Loaded\n");
-        dimensions = ScreenDimensions{width,height};
+        Dimensions = ScreenDimensions{width,height};
 
         //zero is primary
         GLFWmonitor **monitor = glfwGetMonitors(&monitor_num);
-        this->window = glfwCreateWindow( width,  height, title, monitor[monitor_num], share);
+        this->Window = glfwCreateWindow( width,  height, title, monitor[monitor_num], share);
   
         //GLFWmonitor mon;
 
-        glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(Window);
         //window = glfwCreateWindow(800, 600, "Shin Megami Tensei", NULL, NULL);
-        if (!window) {
+        if (!Window) {
             puts("Failed to create GLFW window");
             glfwTerminate();
             return;
@@ -55,8 +53,8 @@ public:
     };
     bool isOpen()
     {
-        if(this->window)
-            return !glfwWindowShouldClose(this->window);
+        if(this->Window)
+            return !glfwWindowShouldClose(this->Window);
         else
         {
             throw (std::runtime_error("window is null"));
@@ -65,15 +63,15 @@ public:
     }
     void closeWindow()
     {
-        glfwSetWindowShouldClose(this->window, true);
+        glfwSetWindowShouldClose(this->Window, true);
     }
     ScreenDimensions getDimensions()
     {
-        return dimensions;
+        return Dimensions;
     }
     void SwapBuffers()
     {
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(Window);
     }
 };
 
