@@ -1,10 +1,10 @@
 //#include "BadGL_main.hpp"
 #include <cstddef>
 #include <stdio.h>
-#include "BadGL_main.hpp"
 #include "BadGL_window.hpp"
 #include "glad/gl.h"
 #include <array>
+#include <iostream>
 static GLuint compile_glsl_string(GLenum type, GLchar* const source)
 {
     GLuint shader;
@@ -14,22 +14,32 @@ static GLuint compile_glsl_string(GLenum type, GLchar* const source)
     shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
+           GLint success;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            char infoLog[512];
+            glGetShaderInfoLog(shader, 512, NULL, infoLog);
+            std::cerr << "Shader compilation failed:\n" << infoLog << std::endl;
+        }
     return shader;
 }
 
 int main(void)
 {
 
-    BadWindow window(800,800,"Test");
+    BadWindow window{};
+    ScreenDimensions dimensions = window.getMonitorDimensions();
+    window.initialzeWindow(400,400, "Test");
+    //window.initialzeWindow(dimensions.width,dimensions.height, "Test");
+
     GLint vertexShader = compile_glsl_string(GL_VERTEX_SHADER,(char* )R"(
     #version 330 core
     layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec3 vertexColor;
     varying highp vec3 color;
     void main()
     {
         gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-        color = vertexColor;
+        color = vec3(1,1,1);
     }
     )");
     GLint fragShader = compile_glsl_string(GL_FRAGMENT_SHADER,(char*)R"(
@@ -44,22 +54,9 @@ int main(void)
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragShader);
-
+ 
     glLinkProgram(shaderProgram);
-    // float vertices[] = {
-    //     -0.5f, -0.5f, 0.0f,
-    //      0.0f,  0.5f, 0.0f,
-    //      0.5f, -0.5f, 0.0f,
-    // };
-    // float vertices[] = {
-    //          -0.5f,  0.5f,
-    //           0.0f,  0.5f,  
-    //           0.5f, 0.5f,  // middle right
-    //         //  0.3f, -0.5f, 0.0f,  // bottom right
-    //         // -0.3f, -0.5f, 0.0f,  // bottom left
-    //         // -0.5f,  0.0f, 0.0f,  // middle left
-    //         // -0.3f,  0.5f, 0.0f   // top left 
-    // };
+
     // Create VAO/VBO
     unsigned int VAO, VBO;
 
@@ -67,28 +64,34 @@ int main(void)
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    std::array<float, 9> vertices = {
-        0.5f,0.5f, 0.0f,
-        0.5, - 0.5f, 0.0f,
-        -0.5f, -0.5f, 0
-    };
 
-    glBufferData(VBO, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+
+    //create and bind verts and attributes
+    std::array<float, 9> vertices = {
+        0.5f, 0.5f,0.f,
+        0.5f, -0.5f,0.0f,
+        -0.5f, -0.5f,0.0f
+
+ 
+
+    };
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
 
+    //glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
     glBindVertexArray(VAO);
-    glBindBuffer(VAO, VBO);
-
 
 
     while(window.isOpen())
     {
+        ScreenDimensions dim = window.getDimensions();
+        glViewport(0, 0, dim.width, dim.height);  // <<— Important!
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
         // Use the shader program
         //glUseProgram(This->_shaderProgram);
@@ -96,15 +99,14 @@ int main(void)
         glUseProgram(shaderProgram);
 
         // Bind the VAO
-        glBindVertexArray(VAO);
         // Bind the VAO
         //glBindVertexArray(This->_VAO);
-        glDrawArrays(GL_TRIANGLE_FAN,0,3);
         
         // Draw the triangle
         //This->_shader_functions.every_loop_function(This, &shaders);
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glDrawArrays(GL_TRIANGLE_STRIP,0,vertices.size()/3);
 
-        
         // Swap front and back buffers
         window.SwapBuffers();
 
