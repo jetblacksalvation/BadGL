@@ -9,13 +9,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE DEBUG)
 
+add_library(BAD_GL_LIB  "src/BadGL_main.cpp") #just to create the target, afterwards using 
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/main_test.cpp")
     add_executable(BAD_GL "main_test.cpp")
     target_link_libraries(BAD_GL BAD_GL_LIB)
 endif()
 
-add_library(BAD_GL_LIB STATIC "src/BadGL_main.cpp") #just to create the target, afterwards using 
 #target_include_directories works with head
 target_include_directories(BAD_GL_LIB PUBLIC "src")
 target_include_directories(BAD_GL_LIB  PUBLIC "includes")

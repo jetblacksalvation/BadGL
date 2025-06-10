@@ -1,10 +1,14 @@
 //#include "BadGL_main.hpp"
 #include <cstddef>
+#include <initializer_list>
+#include <stack>
 #include <stdio.h>
 #include "BadGL_window.hpp"
 #include "glad/gl.h"
-#include <array>
+#include <vector>
 #include <iostream>
+#include <cmath>
+
 static GLuint compile_glsl_string(GLenum type, GLchar* const source)
 {
     GLuint shader;
@@ -65,23 +69,54 @@ int main(void)
 
     glBindVertexArray(VAO);
 
+    float shape_edges = 68.0f;
+    // set this to be the number of vertices for the shape.
+    
+    float step = (2*M_PI)/shape_edges;
+    std::vector<float> vertices;
 
+    std::stack<std::vector<float>> last_verts({{0,0,0}});
+
+    for(float x =0; x< shape_edges; x++)
+    {
+        std::vector<float> new_vertices = 
+        {
+            0.0f,0.0f,0.0f,
+            std::cosf(step *x),std::sinf(step*x),0,
+            
+        };
+        new_vertices.insert(new_vertices.begin(), last_verts.top().begin(),last_verts.top().end());
+
+        last_verts.pop();
+        last_verts.push({std::cosf(step *x),std::sinf(step*x),0,});
+        vertices.insert(vertices.begin(), new_vertices.begin(),new_vertices.end());
+
+    }
+    std::vector<float> new_vertices ;
+
+    new_vertices.insert(new_vertices.begin(), last_verts.top().begin(),last_verts.top().end());
+    new_vertices.push_back(0);
+    new_vertices.push_back(0);
+    new_vertices.push_back(0);
+    new_vertices.push_back(1);
+    new_vertices.push_back(0);
+    new_vertices.push_back(0);
+    vertices.insert(vertices.begin(), new_vertices.begin(),new_vertices.end());
     //create and bind verts and attributes
-std::array<float, 12> vertices = {
-    // Center point
+    // std::vector<float> vertices = {
+    //     // Center point
 
-    // Outer square corners (counter-clockwise)
-     0.5f,  0.5f, 0.0f, // top-right
-    -0.5f,  0.5f, 0.0f, // top-left
-    -0.5f, -0.5f, 0.0f, // bottom-left
-     0.5f, -0.5f, 0.0f, // bottom-right
-
-    // Close the loop by repeating the first outer corner
-};
+    //     // Outer square corners (counter-clockwise)
+    //     0.5f,  0.5f, 0.0f, // top-right
+    //     -0.5f,  0.5f, 0.0f, // top-left
+    //     -0.5f, -0.5f, 0.0f, // bottom-left
+    //     //0.5f, -0.5f, 0.0f, // bottom-right
+    //     // Close the loop by repeating the first outer corner
+    // };
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -110,7 +145,7 @@ std::array<float, 12> vertices = {
         // Draw the triangle
         //This->_shader_functions.every_loop_function(This, &shaders);
         //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glDrawArrays(GL_TRIANGLE_FAN,0,vertices.size()/3);
+        glDrawArrays(GL_TRIANGLES,0,vertices.size()/3);
 
         // Swap front and back buffers
         window.SwapBuffers();
