@@ -3,6 +3,7 @@
 
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
+#include <GL/gl.h>
 #include <stdexcept>
 
 struct ScreenDimensions
@@ -109,6 +110,14 @@ public:
     void SwapBuffers()
     {
         glfwSwapBuffers(Window);
+    }
+    void scaleUp()
+    {
+        int w,h;
+        glfwGetWindowSize(Window,&w , &h);
+
+        glViewport(0,0,w,h);
+        
     }
     
 };

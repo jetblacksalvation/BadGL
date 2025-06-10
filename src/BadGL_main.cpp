@@ -29,8 +29,8 @@ int main(void)
 
     BadWindow window{};
     ScreenDimensions dimensions = window.getMonitorDimensions();
-    window.initialzeWindow(400,400, "Test");
-    //window.initialzeWindow(dimensions.width,dimensions.height, "Test");
+    //window.initialzeWindow(400,400, "Test");
+    window.initialzeWindow(dimensions.width,dimensions.height, "Test");
 
     GLint vertexShader = compile_glsl_string(GL_VERTEX_SHADER,(char* )R"(
     #version 330 core
@@ -67,14 +67,18 @@ int main(void)
 
 
     //create and bind verts and attributes
-    std::array<float, 9> vertices = {
-        0.5f, 0.5f,0.f,
-        0.5f, -0.5f,0.0f,
-        -0.5f, -0.5f,0.0f
+std::array<float, 12> vertices = {
+    // Center point
 
- 
+    // Outer square corners (counter-clockwise)
+     0.5f,  0.5f, 0.0f, // top-right
+    -0.5f,  0.5f, 0.0f, // top-left
+    -0.5f, -0.5f, 0.0f, // bottom-left
+     0.5f, -0.5f, 0.0f, // bottom-right
 
-    };
+    // Close the loop by repeating the first outer corner
+};
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
@@ -90,7 +94,8 @@ int main(void)
     while(window.isOpen())
     {
         ScreenDimensions dim = window.getDimensions();
-        glViewport(0, 0, dim.width, dim.height);  // <<— Important!
+        //glViewport(0, 0, dim.width, dim.height);  // <<— Important!
+        window.scaleUp();
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         // Use the shader program
@@ -105,7 +110,7 @@ int main(void)
         // Draw the triangle
         //This->_shader_functions.every_loop_function(This, &shaders);
         //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glDrawArrays(GL_TRIANGLE_STRIP,0,vertices.size()/3);
+        glDrawArrays(GL_TRIANGLE_FAN,0,vertices.size()/3);
 
         // Swap front and back buffers
         window.SwapBuffers();
