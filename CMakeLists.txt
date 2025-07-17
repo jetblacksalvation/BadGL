@@ -20,6 +20,7 @@ endif()
 target_include_directories(BAD_GL_LIB PUBLIC "src")
 target_include_directories(BAD_GL_LIB  PUBLIC "includes")
 add_subdirectory(includes)
+add_subdirectory(demos)
 #dependancies
 include(FetchContent)
 include(FindOpenGL)

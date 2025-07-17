@@ -1,10 +1,13 @@
+//#include "BadGL_main.hpp"
 #include <cstddef>
 #include <initializer_list>
+#include <stack>
 #include <stdio.h>
 #include "BadGL_window.hpp"
 #include "glad/gl.h"
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 static GLuint compile_glsl_string(GLenum type, GLchar* const source)
 {
@@ -25,7 +28,6 @@ static GLuint compile_glsl_string(GLenum type, GLchar* const source)
     return shader;
 }
 
-
 int main(void)
 {
 
@@ -41,7 +43,7 @@ int main(void)
     void main()
     {
         gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-        color = vec3(1,1,1);
+        color = vec3(1,1,1);%
     }
     )");
     GLint fragShader = compile_glsl_string(GL_FRAGMENT_SHADER,(char*)R"(
@@ -56,36 +58,79 @@ int main(void)
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragShader);
-    GLuint VAO =0,VBO=0;
-    glGenVertexArrays(1,&VAO);
-    glGenBuffers(1,&VBO);
-    
+ 
+    glLinkProgram(shaderProgram);
+
+    // Create VAO/VBO
+    unsigned int VAO, VBO;
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
     glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    int shape_edges = 6;
+    // set this to be the number of vertices for the shape.
 
-    std::vector<float> square= {
-        0,0,0,
-        -.5f,.5f,0,
-        0.f,.5f,0,
-        //other part
-    };
-    glBufferData(GL_ARRAY_BUFFER,square.size()*sizeof(float),square.data(),GL_STATIC_DRAW);
+    float step = (2*M_PI)/shape_edges;
+    std::vector<float> vertices;
+    float scale = 2;
+    std::stack<std::vector<float>> last_verts({{0,0,0}});
 
+    for(int x =0; x< shape_edges+1; x++)
+    {
+        std::vector<float> new_vertices = 
+        {
+            0.0f,0.0f,0.0f,
+            std::cosf(step *x)/scale,std::sinf(step*x)/scale,0,
+            
+        };
+        new_vertices.insert(new_vertices.begin(), last_verts.top().begin(),last_verts.top().end());
 
+        last_verts.pop();
+        last_verts.push({std::cosf(step *x)/scale,std::sinf(step*x)/scale,0,});
+        vertices.insert(vertices.begin(), new_vertices.begin(),new_vertices.end());
+
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
 
+    //glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    glBindVertexArray(VAO);
+
+
     while(window.isOpen())
     {
-        glClearColor(0.5f,0.5f,0.5f,1.0f);
-        glClear(GL_DEPTH_TEST|GL_COLOR_BUFFER_BIT);
+        //ScreenDimensions dim = window.getDimensions();
+        //glViewport(0, 0, dim.width, dim.height);  // <<— Important!
+        //window.scaleUp();
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+        // Use the shader program
+        //glUseProgram(This->_shaderProgram);
+                // Use the shader program
         glUseProgram(shaderProgram);
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES,0,square.size()/3);
+        // Bind the VAO
+        // Bind the VAO
+        //glBindVertexArray(This->_VAO);
+        
+        // Draw the triangle
+        //This->_shader_functions.every_loop_function(This, &shaders);
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glDrawArrays(GL_TRIANGLES,0,vertices.size()/3);
+
+        // Swap front and back buffers
         window.SwapBuffers();
+
+        // Poll for and process events
         glfwPollEvents();  // Ensure This is called to handle window events
 
     }
+    printf("BadGL Has Been Loaded!\n");
 }
